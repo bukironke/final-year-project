@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LuxeScore - Credit Score Result</title>
+    <link rel = "stylesheet" type="text/css" href="/static/css/creditscoreResult.css">
+    <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+    <script type="text/javascript">
+      var shapValues = JSON.parse('{{ shap_values_for_chart | safe }}');
+</script>
+  <script type="text/javascript">
+    var forecastScores = JSON.parse('{{ forecast_scores | safe }}');
+</script>
+    <!-- LINKS TO FAVICON LINKS FOR DIFFERENT BROWSERS -->
+    <link rel="apple-touch-icon" sizes="180x180" href="/static/img/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/static/img/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/static/img/favicon-16x16.png">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@1,100;1,400&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=League+Gothic&family=Montserrat:ital,wght@1,100;1,400&display=swap');
+      </style>
+</head>
+<body>
+    <!-- Credit Report Section -->
+    <section class="user_report_section">
+      <div class="container">
+        <!-- Welcome message -->
+        <h1 class="text_center">
+          Welcome, {{ name }}
+          <span>Here is your LuxeScore report</span>
+        </h1>
+        <!-- top row with the charts -->
+        <div class="d_flex charts_row">
+          <!-- Pie Chart -->
+          <div class="chart-col">
+            <h3 class="text_center">Contributing Factors</h3>
+            <div id="piechart"></div>
+          </div>
+          <!-- Credit Score SVG -->
+          <div class="score-visual">
+            <h3 id="scoreText" class="" data-score="{{ credit_score }}">
+              <span>Your LuxeScore is</span>
+              {% for digit in credit_score|string %}
+              <b>{{ digit }}</b>
+              {% endfor %}
+              <span>out of 900</span>
+            </h3>
+            <svg
+            viewbox="0 0 100 100"
+            version="1.1"
+            xmlns="http://www.w3.org/2000/svg"
+            >
+            <circle cx="50" cy="50" r="30" />
+            <circle id="score" cx="50" cy="50" r="30" />
+          </svg>
+        </div>
+        <!-- Line Chart  -->
+        <div class="chart-col">
+          <h3 class="text_center">Effects of credit behaviour</h3>
+          <div id="line_chart_element"></div>
+        </div>
+      </div>
+        <!-- Bottom row with interest rate and improvement points -->
+        <div class="d_flex score-and-factors">
+          <!-- Interest rate and loan decision -->
+          <div class="left-factors">
+            <dl>
+              <dt>LuxeLoan & LuxeRate</dt>
+              <dd>You are {{ 'unlikely' if session['default'] == 'will default' else 'likely' }} to be entitled to a LuxeLoan</dd>
+              <dd>Your LuxeRate: {{ interest_rate }}%</dd>
+            </dl>
+          </div>
+          <!-- Improvement points -->
+          <div class="right-factors">
+            <dl>
+              <dt>Feedback from the report:</dt>
+              <dd>Your financial activity is {{ 'poor' if session['default'] == 'will default' else 'good!' }}</dd>
+              <dd>{{ 'Only take out loans you can afford!' if session['default'] == 'will default' else 'Continue to be financially responsible' }}</dd>
+            </dl>
+          </div>
+        </div>
+        <!-- PDF button -->
+        <div class="d_flex">
+          <a href="{{ url_for('generate_pdf') }}" class="pdf_button">Generate PDF Report</a>
+        </div>
+      </div>
+    </section>
+     <!-- JS LINK -->
+     <script src = "/static/js/creditscoreresult.js"></script>
+</body>
+</html>
