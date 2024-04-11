@@ -1,0 +1,308 @@
+:root {
+	--border-color: #00000027;
+	--black: #000;
+	--white: #fff;
+  }
+  * {
+	margin: 0;
+	padding: 0;
+	box-sizing: border-box;
+  }
+  
+  html, body {
+	overflow-x: hidden;
+	
+  }
+  body {
+	background-color: #f7f7f7;
+	color: #a6a6a6;
+	font: normal 700 16px/1 "Montserrat", sans-serif;
+	overflow-x: hidden;
+  }
+  
+  h1 {
+	font-size: 37px;
+  }
+  
+  h1 span {
+	font-family: "League Gothic", sans-serif;
+	font-size: 28px;
+	font-weight: normal;
+	color: #646664;
+	display: block;
+	padding: 8px;
+  }
+  
+  .d_flex {
+	display: flex;
+  }
+  
+  .flex_wrap {
+	flex-wrap: wrap;
+  }
+  
+  .container {
+	max-width: 1500px;
+	margin: 0 auto;
+	width: 100%;
+	padding: 0 18px;
+  }
+  
+  .text_center {
+	text-align: center;
+  }
+  
+  .charts_row {
+	box-shadow: 0 0 15px #00000018;
+	border-radius: 8px;
+	background-color: var(--white);
+	margin: 20px auto;
+	border: 1px solid #b3b3b3;
+  }
+  
+  
+  .user_report_section {
+	padding: 25px 0;
+  }
+  .google-visualization-tooltip { pointer-events: none; }
+  /* Pie Chart */
+  .chart-col {
+	width: 35%;
+	display: flex;
+	flex-direction: column;
+	
+	padding: 12px;
+  }
+  
+  .chart-col h3 {
+	padding: 15px;
+  }
+  
+  #piechart {
+	width: 100%;
+	margin: auto;
+  }
+  
+  /* Line chart  */
+  #line_chart_element {
+	width: 100%;
+	margin: auto;
+  }
+  
+  /* Credit score SVG */
+  .score-visual {
+	text-align: center;
+	position: relative;
+	overflow: hidden;
+	border: 1px solid var(--border-color);
+	border-top: none;
+	border-bottom: none;
+	margin: 0 auto;
+	flex-grow: 1;
+  }
+  
+  .score-visual svg {
+	pointer-events: none;
+	max-height: 350px;
+	width: 100%;
+	height: 100%;
+	transform: scale(1.4) rotate(133.5deg);
+  }
+  .score-visual svg circle {
+	fill: none;
+	stroke: #e8ebee;
+	stroke-width: 4;
+	stroke-linecap: round;
+	stroke-dasharray: 1463;
+	stroke-dashoffset: 1320;
+  }
+  
+  .score-visual svg circle#scoreGlow,
+  .score-visual svg circle#score {
+	stroke: #a6a6a6;
+	stroke-dashoffset: 1463;
+	transition: all 2s cubic-bezier(0.2, 0, 0, 1);
+  }
+  
+  h3#scoreText {
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	transform: translate(-50%, -50%);
+	width: 78%;
+	text-align: center;
+	padding: 15px 7px;
+	font-size: 21px;
+	letter-spacing: .5px;
+	opacity: 0;
+	transition: opacity 4s cubic-bezier(0.2, 0, 0, 1);
+  }
+  
+  h3#scoreText span {
+	font-family: "League Gothic", sans-serif;
+	color: #646664;
+	display: block;
+	padding: 8px;
+  }
+  h3#scoreText b {
+	transition: opacity 4s cubic-bezier(0.2, 0, 0, 1);
+	opacity: 0;
+	font-size: 79px;
+  }
+  h3#scoreText.shown {
+	opacity: 1;
+  }
+  h3#scoreText.shown b {
+	opacity: 1;
+  }
+  h3#scoreText.shown b:nth-of-type(1) {
+	transition-delay: 0s;
+  }
+  h3#scoreText.shown b:nth-of-type(2) {
+	transition-delay: 0.4s;
+  }
+  h3#scoreText.shown b:nth-of-type(3) {
+	transition-delay: 1s;
+  }
+  
+  /* score and factors */
+  .score-and-factors {
+	margin: 20px auto;
+	justify-content: space-between;
+	gap: 17px;
+  }
+  
+  .left-factors,
+  .right-factors {
+	display: flex;
+	flex-direction: column;
+	gap: 20px;
+	flex: 1;
+  }
+  
+  dl {
+	color: #3d403d;
+	list-style: none;
+	border-radius: 6px;
+	box-shadow: 0 4px 9px 0 rgba(133, 103, 158, 0.24);
+	border: 1px solid #b3b3b3;
+	background-color: var(--white);
+	padding: 1px 16px;
+  }
+  dt {
+	font-weight: 550;
+	font-family: "League Gothic", sans-serif;
+	border-bottom: solid 1px #d5cedd;
+	margin: 0;
+	padding: 15px 0;
+	font-size: 23px;
+  }
+  dd {
+	border-top: 1px solid #efecf2;
+	font-weight: normal;
+	color: #3d403d;
+	font-size: 16px;
+	margin: 3px auto;
+	width: 100%;
+	padding: 8px 0;
+	display: block;
+	list-style: none;
+  }
+  dl dd:nth-of-type(1) {
+	border-top: none;
+  }
+  
+  /* PDF Button */
+  .pdf_button {
+	color: #fff;
+	background-color: #000;
+	font-size: 17px;
+	text-decoration: none;
+	margin: 66px auto 20px auto;
+	box-shadow: 0px 0px 0 #a6a6a6;
+	transition: 0.3s;
+	padding: 7px 23px;
+	border-radius: 5px;
+	border: 0;
+	cursor: pointer;
+	user-select: none;
+	font-family: "Montserrat", sans-serif;
+  }
+  
+  .pdf_button:hover {
+	box-shadow: 3px 4px 0 #a6a6a6;
+  }
+  
+  
+  @media screen and (max-width: 1500px) {
+	.container {
+	  max-width: 100%;
+	}
+  }
+  @media screen and (max-width: 950px) {
+	h3#scoreText {
+	  font-size: 20px;
+	}
+	h3#scoreText b {
+	  font-size: 60px;
+	}
+  }
+  @media screen and (max-width: 768px) {
+  
+	.score-and-factors {
+	  flex-wrap: wrap;
+	  margin: 15px auto;
+	  justify-content: center;
+	}
+	.left-factors,
+	.right-factors {
+	  width: 100%;
+	  flex: none;
+	}
+	/* PDF BUTTON */
+	.pdf_button {
+	  font-size: 16px;
+	  margin: 50px auto 12px auto;
+	  padding: 7px 18px;
+	}
+	/* Charts section */
+	.charts_row {
+	  flex-wrap: wrap;
+	  margin: 15px auto;
+	}
+	.chart-col {
+	  width: 100%;
+	  padding: 12px;
+	}
+	/* Pie Chart */
+	#piechart {
+	  min-height: 270px;
+	}
+	/* Line Chart */
+	#line_chart_element {
+	  min-height: 250px;
+	}
+	/* Credit score SVG */
+	.score-visual {
+	  border: 1px solid var(--border-color);
+	  border-left: none;
+	  border-right: none;
+	}
+	.score-visual svg {
+	  transform: scale(1.3) rotate(133.5deg);
+	}
+	h3#scoreText {
+	  width: 78%;
+	  padding: 10px 6px;
+	  font-size: 18px;
+	}
+  
+	h3#scoreText span {
+	  padding: 6px;
+	}
+	
+	h3#scoreText b {
+	  font-size: 75px;
+	}
+  }
+  
