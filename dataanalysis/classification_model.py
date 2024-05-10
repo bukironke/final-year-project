@@ -2,9 +2,6 @@
 #importing relevant libraries
 import pandas as pd 
 import numpy as np
-import matplotlib.pyplot as plt
-import seaborn as sns
-import shap
 import fasttreeshap
 import warnings
 warnings.filterwarnings('ignore')
@@ -16,16 +13,14 @@ from sklearn.metrics import classification_report, accuracy_score, confusion_mat
 from sklearn.model_selection import cross_val_score, StratifiedKFold
 import pickle
 
+def load_data(file_path):
+    return pd.read_csv(file_path)
 
-data = pd.read_csv("dataanalysis/creditriskdataset.csv")
-
-#DATA CLEANING
-
-#function for dropping columns/rows
-def clean_dataset(data):
+#function to perform data cleaning progress
+def clean_data(data):
     #dropping rows with missing values
     data.dropna(subset=['person_emp_length', 'loan_int_rate'], inplace=True)
-    #drop columns
+    #drop specified columns
     data.drop(columns=['loan_amnt', 'loan_status', 'loan_percent_income', 'loan_grade'], inplace=True)
     #average life expectancy in uk is 81 in the UK
     data = data[data['person_age'] < 81]
@@ -34,17 +29,16 @@ def clean_dataset(data):
     data = data[data['person_emp_length'] <= emp_max]
     #since the application gives out personal loans, only want to keep instances of loans which are classified as 'personal'
     data = data[~data['loan_intent'].isin(['EDUCATION', 'MEDICAL', 'VENTURE', 'DEBTCONSOLIDATION', 'HOMEIMPROVEMENT'])]
-    data.drop(columns=['loan_intent'], inplace=True)
-    #'other' is hard to quantify when gathering user information
     data = data[data['person_home_ownership'] != 'OTHER']
+     #'other' is hard to quantify when gathering user information
     print('Dataset has been cleaned. Current shape:', data.shape)
     print('Amount of null values in each column is:')
     print(data.isnull().sum())      
     return data
 
-#DATA TRANSFORMATION
 
-def transform_dataset(data):
+#function to transform the data
+def transform_data(data):
     #renaming columns
     data = data.rename(columns= {"person_age": "Age", "person_income": "Income", "person_emp_length": "Employment Years", "cb_person_cred_hist_length": "Credit History Years",
     "person_home_ownership": "Home Ownership", "cb_person_default_on_file": "Defaulted on Loan"})
@@ -53,88 +47,102 @@ def transform_dataset(data):
     data['HomeOwnership_encoded'] = label_encoder.fit_transform(data['Home Ownership'])
     data['Defaulted_encoded'] = label_encoder.fit_transform(data['Defaulted on Loan'])
     print('Data transformation has been completed.')
-    return data  
-    
-#MODEL BUILDING, EVALUATION AND SHAPLEY VALUES
+    return data
 
-#fitting feature and target variable for model
-feature_columns = ['Age', 'Income', 'HomeOwnership_encoded', 'Employment Years', 'Credit History Years']
-X = data[feature_columns]
-y = data['Defaulted_encoded']
+#function to split the dataset for model building and to perform random oversampling
+def split_data(data, feature_columns, target_column):
+    X = data[feature_columns]
+    y = data[target_column]
+    ros = RandomOverSampler(sampling_strategy=1)
+    X_res, y_res = ros.fit_resample(X, y)
+    print('Data has been split.')
+    return train_test_split(X_res, y_res, test_size=0.2, random_state=42)
 
-#imbalance of classes - so random oversampling to make both classes equal
-ros = RandomOverSampler(sampling_strategy=1)
-X_res, y_res = ros.fit_resample(X, y)
-y_res.value_counts()
+#function to train the model 
+def train_model(X_train, y_train):
+    rf_classifier = RandomForestClassifier(n_estimators=100, random_state=42)
+    rf_classifier.fit(X_train, y_train)
+    print('Your model has been successfully trained')
+    return rf_classifier
 
-#creating training and testing split
-X_train, X_test, y_train, y_test = train_test_split(X_res, y_res, test_size=0.2, random_state=42)
+#function to evalute the model's performance
+def evaluate_model(model, X_test, y_test):
+    y_pred = model.predict(X_test)
+    print(classification_report(y_test, y_pred))
+    accuracy = accuracy_score(y_test, y_pred)
+    print(f"Accuracy: {accuracy:.2f}")
+    conf_matrix = confusion_matrix(y_test, y_pred)
+    print("Confusion Matrix:")
+    print(conf_matrix)
 
-#building model and then printing out its classification report, accuracy and confusion matrix
-rf_classifier = RandomForestClassifier(n_estimators=100, random_state=42)
+#function to cross validate the model
+def cross_validate(model, X, y):
+    cv = StratifiedKFold(n_splits=5)
+    scores = cross_val_score(model, X, y, cv=cv, scoring='accuracy')
+    print("Cross-Validation Scores:", scores)
+    print("Average score:", np.mean(scores))
 
-rf_classifier.fit(X_train, y_train)
 
-y_pred_rf = rf_classifier.predict(X_test)
+#function to pickle file for deployment
+def save_model(model, file_path):
+   with open(file_path, 'wb') as file:
+      pickle.dump(model, file)
+   print("Model saved successfully.")
 
-print(classification_report(y_test, y_pred_rf))
+#function to calculate the shap values - based on defaulted class (1)
+def calculate_shap_values(model, X):
+    explainer = fasttreeshap.TreeExplainer(model)
+    shap_values = explainer.shap_values(X)
+    shap_values_array = np.array(shap_values)
+    print('The shapley values have been created')
+    return shap_values_array
 
-accuracy = accuracy_score(y_test, y_pred_rf)
-print(f"Accuracy: {accuracy:.2f}")
-
-conf_matrix = confusion_matrix(y_test, y_pred_rf)
-print("Confusion Matrix:")
-print(conf_matrix)
-
-#cross validating the model to see its performance against untrained data
-cv = StratifiedKFold(n_splits=5)
-scores = cross_val_score(rf_classifier, X, y, cv=cv, scoring='accuracy')
-
-print("Cross-Validation Scores:", scores)
-print("Average score:", np.mean(scores))
-
-#save the model in pickle file so can be deployed onto app
-model_loan_file = "defaulted_loan_model.pkl"
-with open(model_loan_file, 'wb') as file:
-    pickle.dump(rf_classifier, file)
-
-#calculating shap values - utilising the original module and the 'fasttreeshap' module - visualisation of the shap values for both classes is in mlmodel2.ipynb
-
-#original module 
-explainer = shap.TreeExplainer(rf_classifier)
-shap_values = explainer.shap_values(X)
-
-#shap values saved as a list so it is 3d rather than 2d automatically so need to convert it into an array before 
-shap_values_array = np.array(shap_values)
-
-#create an explanation obj - for the not defaulted loan
-exp = shap.Explanation(values=shap_values_array[:, 0, :], base_values=explainer.expected_value[0], data=X)
-#create an explanation obj - for the defaulted loan
-exp = shap.Explanation(values=shap_values_array[:, 1, :], base_values=explainer.expected_value[1], data=X)
-
-#fasttreeshap module 
-#3 versions of fasttreeshap which reduces script run time - from 2m down to 11-12s 
-#version 1
-explainer = fasttreeshap.TreeExplainer(rf_classifier, algorithm = "v1")
-#version 2
-explainer = fasttreeshap.TreeExplainer(rf_classifier, algorithm = "v2")
-#auto - fastest at runtime of 11 secs
-explainer = fasttreeshap.TreeExplainer(rf_classifier, algorithm = "auto")
-shap_values = explainer.shap_values(X)
-
-#function to get the numerical contributions of each feature to the model decision based on the shapley value calculation
-feature_cols = ['Age', 'Income', 'HomeOwnership_encoded', 'Employment Years', 'Credit History Years']
-
-def shap_percentages(shap_values_array):
-    shap_default = shap_values_array[1, :, :] #for not defualting, the 1 would be 0
-
+def shap_percentages(shap_values_array, feature_columns):
+    shap_default = shap_values_array[1, :, :]
     av_shapvalues = np.mean(np.abs(shap_default), axis=0)
     total_shapvalues = np.sum(av_shapvalues)
 
-    print ("Feature contributions for defaulting on a loan:")
-    for i, feature in enumerate(feature_cols):
-      contribution_percent = (av_shapvalues[i] / total_shapvalues) * 100
-      print (f"{feature} contributed to {contribution_percent:.2f}% of the decision")
+    print("Feature contributions for defaulting on a loan:")
+    for i, feature in enumerate(feature_columns):
+        contribution_percent = (av_shapvalues[i] / total_shapvalues) * 100
+        print(f"{feature} contributed to {contribution_percent:.2f}% of the decision")
+        print('The process has been completed')
 
-shap_values_array_example = np.random.rand(2, 1, len(feature_cols)) 
-shap_percentages(shap_values_array_example)
+def main():
+    #load the data
+    data = load_data("dataanalysis/creditriskdataset.csv")
+
+    #clean the data
+    data = clean_data(data)
+
+    #transform the data
+    data = transform_data(data)
+
+    #split the data and random oversample
+    feature_columns = ['Age', 'Income', 'HomeOwnership_encoded', 'Employment Years', 'Credit History Years']
+    target_column = 'Defaulted_encoded'
+    X_train, X_test, y_train, y_test = split_data(data, feature_columns, target_column)
+
+    #train the model
+    model = train_model(X_train, y_train)
+
+    #evaluate the model
+    evaluate_model(model, X_test, y_test)
+
+    #cross validate the model
+    cross_validate(model, data[feature_columns], data[target_column])
+
+    #save the model as a pickle file
+    save_model(model, "defaulted_loan_model.pkl")
+
+    #calculate the shap values
+    shap_values_array = calculate_shap_values(model, X_test)
+
+    #calculate the contributions to the model - based on defaulted class (1)
+    shap_percentages(shap_values_array, feature_columns)
+
+
+#runs the script
+if __name__ == "__main__":
+    main()
+
